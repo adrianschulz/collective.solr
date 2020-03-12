@@ -16,6 +16,15 @@ class FlareContentListingObject(object):
     def __init__(self, flare):
         self.flare = flare
 
+    def __getattr__(self, name):
+        """We'll override getattr so that we can defer name lookups to the real
+        underlying objects without knowing the names of all attributes.
+        """
+        if name in self.flare:
+            return self.flare[name]
+        else:
+            raise AttributeError(name)
+
     def getId(self):
         return self.flare.getId
 
