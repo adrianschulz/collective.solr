@@ -53,8 +53,8 @@ class Search(object):
 
     def search(
         self,
-        core,
         query,
+        core='',
         wt="xml",
         sow="true",
         lowercase_operator="true",

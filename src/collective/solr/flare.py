@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from zope.interface import implementer
-from zope.component import adapts
+from zope.component import adapter
 from zope.component.hooks import getSite
 from zope.publisher.interfaces.http import IHTTPRequest
 from OFS.Traversable import path2url
@@ -16,10 +16,9 @@ timezone = DateTime().timezone()
 
 
 @implementer(IFlare)
+@adapter(ISolrFlare, IHTTPRequest)
 class PloneFlare(AttrDict):
     """ a sol(a)r brain, i.e. a data container for search results """
-
-    adapts(ISolrFlare, IHTTPRequest)
 
     __allow_access_to_unprotected_subobjects__ = True
 
