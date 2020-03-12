@@ -48,21 +48,34 @@ class SolrConnectionManager(object):
         config.base = six.text_type(base)
         self.closeConnection(clearSchema=True)
 
-    def closeConnection(self, clearSchema=False):
+    def closeConnection(self, clearSchema=False, core=None):
         """ close the current connection, if any """
         logger.debug("closing connection")
-        conn = getLocal("connection")
+        if core is None:
+            connection_key = 'connection'
+            schema_key = 'schema'
+        else:
+            connection_key = 'connection_{0}'.format(core)
+            schema_key = 'schema_{0}'.format(core)
+        conn = getLocal(connection_key)
+
         if conn is not None:
             conn.close()
-            setLocal("connection", None)
+            setLocal(connection_key, None)
         if clearSchema:
-            setLocal("schema", None)
+            setLocal(schema_key, None)
 
-    def getConnection(self):
+    def getConnection(self, core=None):
         """ returns an existing connection or opens one """
         if not isActive():
             return None
-        conn = getLocal("connection")
+
+        if core is None:
+            connection_key = 'connection'
+        else:
+            connection_key = 'connection_{0}'.format(core)
+        conn = getLocal(connection_key)
+
         if conn is not None:
             return conn
 
@@ -83,20 +96,24 @@ class SolrConnectionManager(object):
             host = "%s:%d" % (config_host, config_port)
             logger.debug("opening connection to %s", host)
             conn = SolrConnection(host=host, solrBase=config_base, persistent=True)
-            setLocal("connection", conn)
+            setLocal(connection_key, conn)
         return conn
 
-    def getSchema(self):
+    def getSchema(self, core=None):
         """ returns the currently used schema or fetches it """
-        schema = getLocal("schema")
+        if core is None:
+            schema_key = 'schema'
+        else:
+            schema_key = 'schema_{0}'.format(core)
+        schema = getLocal(schema_key)
         if schema is None:
-            conn = self.getConnection()
+            conn = self.getConnection(core)
             if conn is not None:
                 logger.debug("getting schema from solr")
                 self.setSearchTimeout()
                 try:
                     schema = conn.get_schema()
-                    setLocal("schema", schema)
+                    setLocal(schema_key, schema)
                 except (error, CannotSendRequest, ResponseNotReady):
                     logger.exception("exception while getting schema")
         return schema

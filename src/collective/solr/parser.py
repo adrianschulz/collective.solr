@@ -90,6 +90,7 @@ class SolrResponse(Lazy):
     """ a solr search response; TODO: this should get an interface!! """
 
     __allow_access_to_unprotected_subobjects__ = True
+    _result_count = None
 
     def __init__(self, data=None, unmarshallers=unmarshallers):
         self.unmarshallers = unmarshallers
@@ -135,9 +136,15 @@ class SolrResponse(Lazy):
         """
         return the actual_result_count
         """
+        if self._result_count is not None:
+            return self._result_count
         if getattr(self, "response", None):
             return int(self.response.numFound)
         return 0
+
+    @actual_result_count.setter
+    def actual_result_count(self, value):
+        self._result_count = value
 
     def __len__(self):
         if self._len is not _marker:

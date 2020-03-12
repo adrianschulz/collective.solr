@@ -53,6 +53,7 @@ class Search(object):
 
     def search(
         self,
+        core,
         query,
         wt="xml",
         sow="true",
@@ -65,7 +66,7 @@ class Search(object):
         config = self.getConfig()
         manager = self.getManager()
         manager.setSearchTimeout()
-        connection = manager.getConnection()
+        connection = manager.getConnection(core=core)
         if connection is None:
             raise SolrInactiveException
         parameters["wt"] = wt
