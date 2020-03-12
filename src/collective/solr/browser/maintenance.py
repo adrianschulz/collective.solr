@@ -173,11 +173,6 @@ class SolrMaintenanceView(BrowserView):
 
         for path, obj in findObjects(self.context):
             if ICheckIndexable(obj)():
-                if getOwnIndexMethod:
-                    if getOwnIndexMethod(obj, "indexObject") is not None:
-                        log("skipping indexing of %r via private method.\n" % obj)
-                        continue
-
                 count += 1
                 if count <= skip:
                     continue

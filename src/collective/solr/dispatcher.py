@@ -79,14 +79,8 @@ def solrSearchResults(request=None, core=None, **keywords):
         raise FallBackException  # we can't handle navtree queries yet
 
     use_solr = args.get("use_solr", False)  # A special key to force Solr
-    if not use_solr and config_required:
-        required = set(config_required).intersection(args)
-        if required:
-            for key in required:
-                if not args[key]:
-                    raise FallBackException
-        else:
-            raise FallBackException
+    if not use_solr:
+        raise FallBackException
 
     query, params = search.buildQueryAndParameters(**args)
 

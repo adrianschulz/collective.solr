@@ -1,50 +1,15 @@
 # -*- coding: utf-8 -*-
-from Acquisition import aq_base
 from archetypes.schemaextender.field import ExtensionField
 from archetypes.schemaextender.interfaces import ISchemaExtender
 from archetypes.schemaextender.interfaces import IBrowserLayerAwareExtender
 from collective.solr.browser.interfaces import IThemeSpecific
-from plone.indexer import indexer
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import BooleanWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
-from Products.Archetypes.interfaces import IBaseObject
 from zope.interface import implementer
-from zope.interface import Interface
 
 from collective.solr import SolrMessageFactory as _
-
-
-@indexer(IBaseObject)
-def searchwords(obj):
-    field = obj.getField("searchwords")
-    if field is None:
-        raise AttributeError
-    words = field.get(obj)
-    words = [w.strip("\r ").decode("utf-8") for w in words.split("\n")]
-    return tuple([w for w in words if w])
-
-
-@indexer(Interface)
-def showinsearch(obj):
-    # if the object is a dexterity object, check for the showinsearch attribute
-    if getattr(aq_base(obj), "showinsearch", True) is False:
-        return obj.showinsearch
-    # if the object isn't an Archetype, it should be included
-    getField = getattr(aq_base(obj), "getField", None)
-    if getField is None:
-        return True
-    # if the object doesn't have the field, it should be included
-    field = obj.getField("showinsearch")
-    if field is None:
-        return True
-    value = field.get(obj)
-    # None is the default value, meaning no value has been set, we treat this
-    # as 'should be included in search'
-    if value is None:
-        value = True
-    return value
 
 
 class ExtentionTextField(ExtensionField, TextField):

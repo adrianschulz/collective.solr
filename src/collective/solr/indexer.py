@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from logging import getLogger
 from lxml import etree
+from Acquisition import aq_base
 from Acquisition import aq_get
 from DateTime import DateTime
 from datetime import date, datetime
 from zope.component import queryUtility, queryMultiAdapter
-from zope.component import queryAdapter, adapts
+from zope.component import queryAdapter, adapts, adapter
 from zope.interface import implementer
 from zope.interface import Interface
 from ZODB.interfaces import BlobError
@@ -14,18 +15,13 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.CMFCatalogAware import CMFCatalogAware
 import six
 
-try:
-    from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
-except ImportError:
-    CatalogMultiplex = None
-try:  # noqa
-    from plone.app.content.interfaces import IIndexableObjectWrapper
-except ImportError:  # noqa
-    # Plone 5
-    from plone.indexer.interfaces import IIndexableObjectWrapper
+from plone.indexer import indexer
+from plone.indexer.interfaces import IIndexableObjectWrapper
 from plone.indexer.interfaces import IIndexableObject
 from zope.component import getUtility
+from zope.interface import Interface
 from plone.registry.interfaces import IRegistry
+
 
 from collective.solr.interfaces import ISolrConnectionManager
 from collective.solr.interfaces import ISolrIndexQueueProcessor
@@ -40,6 +36,16 @@ from six.moves.urllib.parse import urlencode
 
 logger = getLogger("collective.solr.indexer")
 
+import pkg_resources
+
+INDEXABLE_CLASSES = [CMFCatalogAware, ]
+try:  # pragma: no cover
+    pkg_resources.get_distribution('Products.Archetypes')
+    from Products.Archetypes.CatalogMultiplex import CatalogMultiplex
+    INDEXABLE_CLASSES.append(CatalogMultiplex)
+except pkg_resources.DistributionNotFound:  # pragma: no cover
+    pass
+INDEXABLE_CLASSES = tuple(INDEXABLE_CLASSES)
 
 @implementer(ICheckIndexable)
 class BaseIndexable(object):
@@ -53,7 +59,7 @@ class BaseIndexable(object):
         if not CatalogMultiplex:
             return isinstance(self.context, CMFCatalogAware)
         else:
-            return isinstance(self.context, (CatalogMultiplex, CMFCatalogAware))
+            return isinstance(self.context, INDEXABLE_CLASSES)
 
 
 def datehandler(value):
@@ -225,9 +231,12 @@ class SolrIndexProcessor(object):
                     attributes = list(attributes)
                     attributes.extend(["path_string", "path_parents", "path_depth"])
 
-                attributes = set(schema.keys()).intersection(attributes)
-                if not attributes:
-                    return
+                if attributes:
+                    attributes = set(schema.keys()).intersection(attributes)
+                    if not attributes:
+                        return
+                else:
+                    attributes = schema.keys()
 
                 if uniqueKey not in attributes:
                     # The uniqueKey is required in order to identify the
@@ -256,7 +265,7 @@ class SolrIndexProcessor(object):
                 except (SolrConnectionException, error):
                     logger.exception("exception during indexing %r", obj)
 
-    def reindex(self, obj, attributes=None, update_metadata=False):
+    def reindex(self, obj, attributes=None, update_metadata=1):
         if not attributes:
             attributes = None
         self.index(obj, attributes)
@@ -394,3 +403,38 @@ class SolrIndexProcessor(object):
             data[name] = value
         missing = set(schema.requiredFields) - set(data.keys())
         return data, missing
+
+@indexer(Interface)
+def searchwords(obj):
+    words = ''
+    if getattr(aq_base(obj), 'searchwords', ''):
+        words = obj.searchwords
+    getField = getattr(aq_base(obj), 'searchwords', None)
+    if getField is not None:
+        field = obj.getField('searchwords')
+        words = field.get(obj)
+    if not words:
+        return ()
+    words = [w.strip('\r ').decode('utf-8') for w in words.split('\n')]
+    return tuple([w for w in words if w])
+
+
+@indexer(Interface)
+def showinsearch(obj):
+    # if the object is a dexterity object, check for the showinsearch attribute
+    if getattr(aq_base(obj), 'showinsearch', True) is False:
+        return obj.showinsearch
+    # if the object isn't an Archetype, it should be included
+    getField = getattr(aq_base(obj), 'getField', None)
+    if getField is None:
+        return True
+    # if the object doesn't have the field, it should be included
+    field = obj.getField('showinsearch')
+    if field is None:
+        return True
+    value = field.get(obj)
+    # None is the default value, meaning no value has been set, we treat this
+    # as 'should be included in search'
+    if value is None:
+        value = True
+    return value

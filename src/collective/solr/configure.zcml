@@ -17,7 +17,6 @@
 
   <include package="plone.browserlayer" />
   <include package="plone.app.registry" />
-  <include package="collective.js.showmore" />
   <include package="plone.restapi" />
 
   <include file="profiles.zcml" />
@@ -63,15 +62,11 @@
 	  name="Image"
 	  />
     </configure>
-    <configure zcml:condition="installed plone.dexterity">
-
-      <include package="plone.dexterity" file="meta.zcml" />
-      <include package="plone.dexterity"  />
 
       <!-- Schema extender as behavior -->
       <plone:behavior
 	  title="Solr extension"
-    name="solr.fields"
+      name="solr.fields"
 	  description="Extra fields for Solr indexing"
 	  provides=".behaviors.ISolrFields"
 	  zcml:condition="installed plone.app.dexterity"
@@ -95,7 +90,7 @@
 	  for="plone.dexterity.interfaces.IDexterityContent"
 	  name="Image"
 	  />
-    </configure>
+
 
     <adapter
         factory=".indexer.BaseIndexable" />
@@ -133,14 +128,16 @@
   <adapter name="path_depth" factory=".attributes.path_depth" />
   <adapter name="path_parents" factory=".attributes.path_parents" />
 
+  <!-- Behavior / Extender fields -->
+  <adapter factory=".indexer.searchwords" name="searchwords" />
+  <adapter factory=".indexer.showinsearch" name="showinsearch" />
+
   <adapter
-      zcml:condition="installed plone.app.contentlisting"
       factory="plone.app.contentlisting.contentlisting.ContentListing"
       for="collective.solr.parser.SolrResponse"
       />
 
   <adapter
-      zcml:condition="installed plone.app.contentlisting"
       factory="collective.solr.contentlisting.FlareContentListingObject"
       for="collective.solr.flare.PloneFlare"
       />

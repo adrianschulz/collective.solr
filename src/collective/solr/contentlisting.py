@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from plone import api
+from plone.app.contentlisting.contentlisting import BaseContentListingObject
 from plone.app.contentlisting.interfaces import IContentListingObject
 from plone.app.layout.icons.interfaces import IContentIcon
 from plone.i18n.normalizer.interfaces import IIDNormalizer
@@ -12,7 +13,7 @@ from zope.interface import implementer
 
 
 @implementer(IContentListingObject)
-class FlareContentListingObject(object):
+class FlareContentListingObject(BaseContentListingObject):
     def __init__(self, flare):
         self.flare = flare
 
