@@ -22,13 +22,6 @@ from zope.interface import implementer
 import six
 from six.moves import map
 
-try:
-    from Products.LinguaPlone.catalog import languageFilter
-except ImportError:
-
-    def languageFilter(args):
-        pass
-
 
 logger = getLogger("collective.solr.search")
 
@@ -138,7 +131,6 @@ class Search(object):
         params = cleanupQueryParameters(params, schema)
         config = self.getConfig()
 
-        languageFilter(args)
         prepareData(args)
         mangleQuery(args, config, schema)
 

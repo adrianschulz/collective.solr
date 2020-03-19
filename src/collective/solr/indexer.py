@@ -6,9 +6,8 @@ from Acquisition import aq_get
 from DateTime import DateTime
 from datetime import date, datetime
 from zope.component import queryUtility, queryMultiAdapter
-from zope.component import queryAdapter, adapts, adapter
+from zope.component import queryAdapter, adapter
 from zope.interface import implementer
-from zope.interface import Interface
 from ZODB.interfaces import BlobError
 from ZODB.POSException import ConflictError
 from Products.CMFCore.utils import getToolByName
@@ -48,18 +47,14 @@ except pkg_resources.DistributionNotFound:  # pragma: no cover
 INDEXABLE_CLASSES = tuple(INDEXABLE_CLASSES)
 
 @implementer(ICheckIndexable)
+@adapter(Interface)
 class BaseIndexable(object):
-
-    adapts(Interface)
 
     def __init__(self, context):
         self.context = context
 
     def __call__(self):
-        if not CatalogMultiplex:
-            return isinstance(self.context, CMFCatalogAware)
-        else:
-            return isinstance(self.context, INDEXABLE_CLASSES)
+        return isinstance(self.context, INDEXABLE_CLASSES)
 
 
 def datehandler(value):
@@ -266,8 +261,6 @@ class SolrIndexProcessor(object):
                     logger.exception("exception during indexing %r", obj)
 
     def reindex(self, obj, attributes=None, update_metadata=1):
-        if not attributes:
-            attributes = None
         self.index(obj, attributes)
 
     def unindex(self, obj):
