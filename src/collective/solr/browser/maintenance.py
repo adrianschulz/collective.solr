@@ -247,7 +247,7 @@ class SolrMaintenanceView(BrowserView):
         cpu = timer(clock)  # cpu time
         # get Solr status
         response = conn.search(
-            q=preImportDeleteQuery, rows=MAX_ROWS, fl="%s modified" % key
+            q=preImportDeleteQuery, rows=MAX_ROWS, fl="%s modified" % key, wt='xml'
         )
         # avoid creating DateTime instances
         simple_unmarshallers = unmarshallers.copy()
@@ -378,7 +378,7 @@ class SolrMaintenanceView(BrowserView):
         key = manager.getSchema().uniqueKey
 
         start = 0
-        resp = SolrResponse(conn.search(q="*:*", rows=batch, start=start))
+        resp = SolrResponse(conn.search(q="*:*", rows=batch, start=start, wt='xml'))
         res = resp.results()
         log("%s items in solr catalog\n" % resp.response.numFound)
         deleted = 0
@@ -431,7 +431,7 @@ class SolrMaintenanceView(BrowserView):
             log("handled batch of %d items, committing\n" % len(res))
             conn.commit()
             start += batch
-            resp = SolrResponse(conn.search(q="*:*", rows=batch, start=start))
+            resp = SolrResponse(conn.search(q="*:*", rows=batch, start=start, wt='xml'))
             res = resp.results()
         finished_msg = (
             "solr cleanup finished, %s item(s) removed, " + "%s item(s) reindexed\n"
