@@ -73,14 +73,23 @@ class AutocompleteView(BrowserView):
         response = connection.doGet(url, {})
         results = json.loads(response.read())
 
-        if "grouped" not in results:
+        # unwrap suggestions
+        if 'suggest' not in results:
+            return json.dumps([])
+        if 'suggest' not in results['suggest']:
+            return json.dumps([])
+        if term not in results['suggest']['suggest']:
             return json.dumps([])
 
-        groups = results.get("grouped")["title_autocomplete"]["groups"]
+        suggestions = results['suggest']['suggest'][term]
+        if 'numFound' not in suggestions:
+            return json.dumps([])
+        if not suggestions['numFound']:
+            return json.dumps([])
 
-        suggestions = [x["doclist"]["docs"][0]["title_autocomplete"] for x in groups]
+        suggestions_terms = [suggestion['term'] for suggestion in suggestions['suggestions']]
 
         result = []
-        for suggestion in suggestions:
-            result.append(dict(label=suggestion, value=suggestion))
+        for suggestion_term in suggestions_terms:
+            result.append(dict(label=suggestion_term, value=suggestion_term))
         return json.dumps(result)
