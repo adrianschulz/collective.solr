@@ -36,11 +36,24 @@ class SuggestView(BrowserView):
 
         # Check for existing spellcheck suggestions
         spellcheck_suggestions = spellcheck.get("suggestions", None)
+        spellcheck_collations = spellcheck.get("collations", [])
         correctly_spelled = spellcheck_suggestions == [u"correctlySpelled", True]
 
         # Autocomplete
         if correctly_spelled:
             return json.dumps([x["Title"] for x in results["response"]["docs"]])
+
+        for i, spellcheck_collation in enumerate(spellcheck_collations):
+            # skip collationname
+            if i % 2 == 0:
+                continue
+
+            # effective collation
+            collation = spellcheck_collation
+            collation_suggestion = collation['collationQuery']
+
+            if collation_suggestion:
+                suggestions.append(dict(label=collation_suggestion, value=collation_suggestion))
 
         if not spellcheck_suggestions:
             return json.dumps(suggestions)
@@ -48,7 +61,7 @@ class SuggestView(BrowserView):
         # Collect suggestions
         if spellcheck_suggestions[1]:
             for suggestion in spellcheck_suggestions[1]["suggestion"]:
-                suggestions.append(dict(label=suggestion, value=suggestion))
+                suggestions.append(dict(label=suggestion['word'], value=suggestion['word']))
 
         return json.dumps(suggestions)
 
