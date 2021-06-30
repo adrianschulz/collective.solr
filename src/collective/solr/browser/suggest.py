@@ -13,7 +13,8 @@ class SuggestView(BrowserView):
     def __call__(self):
         retval = {
             'suggestions': [],
-            'categoryTitle': 'Spellchecking'
+            'categoryTitle': 'Spellchecking',
+            'category': 'spellchecking'
         }
         term = self.request.get("term", "")
         if not term:
@@ -74,7 +75,8 @@ class AutocompleteView(BrowserView):
     def __call__(self):
         retval = {
             'suggestions': [],
-            'categoryTitle': 'Autocomplete'
+            'categoryTitle': 'Autocomplete',
+            'category': 'autocomplete'
         }
         term = self.request.get("term", "")
         if not term:
